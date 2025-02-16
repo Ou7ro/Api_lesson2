@@ -39,9 +39,9 @@ def count_clicks(token, link):
     }
     response = requests.get(api_count_clicks, params=payload)
     response.raise_for_status()
-    response_data = response.json()
-    clicks_data = response_data['response']['stats'][0]['views']
-    return clicks_data
+    response_json_obj = response.json()
+    number_of_views = response_json_obj['response']['stats'][0]['views']
+    return number_of_views
 
 def is_shorten_link(token, url):
     parsed_url = urlparse(url)
