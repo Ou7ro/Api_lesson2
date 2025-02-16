@@ -21,8 +21,6 @@ def shorten_link(token, url):
     link = response.json()
     if 'response' in link:
         return link['response']['short_url']
-    elif 'error' in link:
-        raise Exception(f'Неправильный формат ссылки: {link['error']['error_code']}')
 
 def count_clicks(token, link):
     api_count_clicks = 'https://api.vk.ru/method/utils.getLinkStats'
