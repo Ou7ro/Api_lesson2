@@ -19,6 +19,7 @@ def shorten_link(token, url):
     if 'response' in link:
         return link['response']['short_url']
 
+
 def count_clicks(token: str, link: str) -> int:
     api_count_clicks = 'https://api.vk.ru/method/utils.getLinkStats'
 
@@ -48,7 +49,8 @@ def is_shorten_link(token: str, url: str) -> bool:
     response = requests.get(
         'https://api.vk.com/method/utils.getLinkStats', params=parameters)
     response.raise_for_status()
-    return False if 'error' in response.json() else True
+    return 'error' not in response.json()
+
 
 def main():
     user_input = input('Введите ссылку: ')
@@ -67,6 +69,6 @@ def main():
     except requests.exceptions.RequestException as error:
         print("Can't get data from server:\n{0}".format(error))
 
+
 if __name__ == '__main__':
     main()
-
