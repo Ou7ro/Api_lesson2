@@ -5,17 +5,12 @@ from dotenv import load_dotenv
 
 
 class ApiExceptionError(Exception):
-    def __init__(self, message: str, extra_info: dir):
+    def __init__(self, message: str, error_msg):
+        message = f'Api error: {error_msg}'
         super().__init__(message)
-        self.extra_info = extra_info
 
 
-def exception_for_unvalidUrl(response):
-    if 'error' in response:
-        raise ApiExceptionError('Ошибка Api: ', response['error']['error_msg'])
-
-
-def shorten_link(token, url):
+def shorten_link(token: str, url: str):
     api_short_link = 'https://api.vk.ru/method/utils.getShortLink'
 
     payload = {
@@ -24,19 +19,16 @@ def shorten_link(token, url):
         'private': 0,
         'v': '5.199',
         }
-    try:
-        response = requests.get(api_short_link, params=payload, timeout=10)
-        response.raise_for_status()
-        response_answer = response.json()
-        exception_for_unvalidUrl(response_answer)
-    except ApiExceptionError as apierror:
-        exit(f'{apierror}{response_answer['error']['error_msg']}')
+    response = requests.get(api_short_link, params=payload, timeout=10)
+    response.raise_for_status()
     response_answer = response.json()
-    if 'response' in response_answer:
-        return response_answer['response']['short_url']
+    response_answer = response.json()
+    if 'error' in response_answer:
+        raise ApiExceptionError('Api error: ', response_answer['error']['error_msg'])
+    return response_answer
 
 
-def count_clicks(token: str, url: str) -> int:
+def count_clicks(token: str, url: str):
     api_count_clicks = 'https://api.vk.ru/method/utils.getLinkStats'
 
     payload = {
@@ -48,15 +40,12 @@ def count_clicks(token: str, url: str) -> int:
         'extended': 0,
         'v': '5.199',
     }
-    try:
-        response = requests.get(api_count_clicks, params=payload, timeout=10)
-        response.raise_for_status()
-        response_answer = response.json()
-        exception_for_unvalidUrl(response_answer)
-    except ApiExceptionError as apierror:
-        exit(f'{apierror}, {response_answer['error']['error_msg']}')
-    number_of_view = response_answer["response"]["stats"][0]["views"]
-    return number_of_view
+    response = requests.get(api_count_clicks, params=payload, timeout=10)
+    response.raise_for_status()
+    short_link = response.json()
+    if 'error' in short_link:
+        raise ApiExceptionError('Api error: ', short_link['error']['error_msg'])
+    return short_link
 
 
 def is_shorten_link(token: str, url: str) -> bool:
@@ -82,12 +71,12 @@ def main():
     try:
         if is_shorten_link(token, parsed_url):
             number_of_view = count_clicks(token, parsed_url)
-            print('Количество переходов по ссылке: ', number_of_view)
+            print('Количество переходов по ссылке: ', number_of_view["response"]["stats"][0]["views"])
         else:
             short_link = shorten_link(token, user_input)
-            print(short_link)
-    except requests.exceptions.HTTPError as error:
-        print(f"Произошла ошибка: {error}")
+            print(short_link['response']['short_url'])
+    except ApiExceptionError as error:
+        print(error)
 
 
 if __name__ == '__main__':
